@@ -30,9 +30,9 @@ obstacles = {
 }
 
 powerups = {
-    "wrench": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000], # [how much health is restored]
-    "magnet": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20], # [duration]
-    "doublemoney": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20] # [duration]
+    "wrench": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1500, 2000], # [how much health is restored]
+    "magnet": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], # [duration]
+    "doublemoney": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] # [duration]
 }
 
 def main_menu():
@@ -83,10 +83,9 @@ def main_menu():
             if evt.type == buttonclickedevent:
                 if game_data.music: mixer.music.unload()
                 if buttonclicked == "start": game()
-                if buttonclicked == "settings": settings()
                 if buttonclicked == "shop": shop()
                 if buttonclicked == "upgrades": upgrades()
-
+                if buttonclicked == "settings": settings()
         mx, my = mouse.get_pos()
         # generate level for main menu background
         if displacement >= 128:
@@ -288,6 +287,7 @@ def shop():
                 if game_data.music: mixer.music.unload()
                 running = False
                 main_menu()
+                break
             if evt.type == MOUSEBUTTONDOWN:
                 for i in mower_rect_pos:
                     if i[0].collidepoint(mx, my):
@@ -380,6 +380,7 @@ def upgrades():
                 if game_data.music: mixer.music.unload()
                 running = False
                 main_menu()
+                break
             if evt.type == MOUSEBUTTONDOWN:
                 if upgrade_wrench_button.collidepoint(mx, my):
                     if game_data.money >= wrench_price and game_data.wrenchlevel < wrench_maxlevel:
@@ -434,7 +435,6 @@ def upgrades():
 
 
 def settings():
-    global game_data
     if game_data.music:
         # all bgm music by Arevin on Newgrounds
         mixer.music.load("sounds/other-menu-bgm.mp3")
@@ -454,29 +454,28 @@ def settings():
     dilofont_medium = font.Font("fonts/dilofont.ttf", 50)
     settings_title_text = dilofont_large.render("Settings", True, (255, 255, 255))
 
-     
+        
     running = True
     while running:
         for evt in event.get():
             if evt.type == QUIT:
                 if game_data.music: mixer.music.unload()
                 running = False
+                save_data(game_data)
                 main_menu()
             if evt.type == MOUSEBUTTONDOWN:
                 if minus.get_rect(topleft=(965,240)).collidepoint(mx, my):
-                    if game_data.volume > 0:
-                        game_data.volume = round((game_data.volume * 10 - 1) / 10, 1)
+                    if game_data.volume > 0: game_data.volume = round((game_data.volume * 10 - 1) / 10, 1)
                 elif plus.get_rect(topleft=(965+64,240)).collidepoint(mx, my):
-                    if game_data.volume < 1:
-                        game_data.volume = round((game_data.volume * 10 + 1) / 10, 1)
+                    if game_data.volume < 1: game_data.volume = round((game_data.volume * 10 + 1) / 10, 1)
                         
-                if filled_box.get_rect(topleft=(225,150)).collidepoint(mx, my):
-                    game_data.music = not game_data.music
+                if filled_box.get_rect(topleft=(225,150)).collidepoint(mx, my): game_data.music = not game_data.music
 
-                if reset_rect.collidepoint(mx, my):
-                    game_data = reset_data()
-                if back_rect.collidepoint(mx, my):
-                    time.set_timer(QUIT, 10, 1)
+                if reset_rect.collidepoint(mx, my): 
+                    save_data(GameData())
+                    # restart required
+                    sys.exit()
+                if back_rect.collidepoint(mx, my): time.set_timer(QUIT, 10, 1)
                 
         mx, my = mouse.get_pos()
 
@@ -485,20 +484,16 @@ def settings():
 
         screen.blit(dilofont_medium.render("Volume:", True, (255, 255, 255)), (20, 250))
         for j in range(10):
-            if j < game_data.volume * 10:
-                screen.blit(filled_box, (j * (filled_box.get_width() + 10) + 225, 250))
-            else:
-                screen.blit(empty_box, (j * (empty_box.get_width() + 10) + 225, 250))
+            screen.blit(filled_box, (j * (filled_box.get_width() + 10) + 225, 250)) if j < game_data.volume * 10 else screen.blit(empty_box, (j * (empty_box.get_width() + 10) + 225, 250))
+        
         screen.blit(minus, (10 * (empty_box.get_width() + 10) + 225, 240))
         screen.blit(plus, ((10 + 1) * (empty_box.get_width() + 10) + 225, 240))
 
         screen.blit(dilofont_medium.render("Music:", True, (255, 255, 255)), (20, 150))
-        if game_data.music:
-            screen.blit(checkbox, (225, 150))
-        else:
-            screen.blit(uncheckedbox, (225, 150))
+        
+        screen.blit(checkbox, (225, 150)) if game_data.music else screen.blit(uncheckedbox, (225, 150))
 
-        reset_rect = draw_button(screen, (420, 500), 320, 64, (255, 0, 0), dilofont_medium.render("reset all data", True, (255, 255, 255)))
+        reset_rect = draw_button(screen, (200, 500), 1152-400, 64, (255, 0, 0), dilofont_medium.render("reset all data (restart required)", True, (255, 255, 255)))
         back_rect = draw_button(screen, (520, 600), 120, 64, (0, 155, 0), dilofont_medium.render("Back", True, (255, 255, 255)))
 
         display.flip()
