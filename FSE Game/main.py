@@ -14,7 +14,7 @@ YELLOW = (255,255,0)
 
 # load and store data
 game_data = load_data()
-game_data.money = 69696969
+
 # [image, cost, buffs/multipliers: (money, health), owned]
 lawn_mowers = {
     "Basic": [transform.rotate(image.load("images/lawnmower-red.png"), 180), 0, (0, 0), True],
@@ -30,9 +30,9 @@ obstacles = {
 }
 
 powerups = {
-    "wrench": ([10, 20, 30, 40, 50], game_data.wrenchlevel), # [how much health is restored], level
-    "magnet": ([5, 10, 15, 20], game_data.magnetlevel), # [duration], level
-    "doublemoney": ([5, 10], game_data.doublemoneylevel) # [duration], level
+    "wrench": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000], # [how much health is restored]
+    "magnet": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20], # [duration]
+    "doublemoney": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20] # [duration]
 }
 
 def main_menu():
@@ -128,7 +128,7 @@ def game():
     displacement = 0
 
     # reset values to base before applying multipliers
-    game_data.maxhealth = 100
+    game_data.maxhealth = 100 + 25 * game_data.maxhealthlevel
     game_data.health = 100
 
     game_data.moneymultiplier = 1
@@ -150,7 +150,7 @@ def game():
     doublemoney = False
     doublemoney_time = 0
     doublemoney_timer = 0
-    normal_moneymultiplier = game_data.moneymultiplier
+    default_moneymultiplier = game_data.moneymultiplier
 
     # create the starting map, which will always be plain grass
     level = [["grass" for _ in range(screenX//128 + 1)] for _ in range(screenY//128)]
@@ -209,17 +209,17 @@ def game():
         if collided_object in powerups:
             if collided_object == "wrench":
                 level[player_pos//128][1] = "grass"
-                game_data.health += powerups["wrench"][0][powerups["wrench"][1]]
+                game_data.health += powerups["wrench"][game_data.wrenchlevel]
                 if game_data.health > game_data.maxhealth:
                     game_data.health = game_data.maxhealth
             if collided_object == "magnet":
                 level[player_pos//128][1] = "grass"
                 use_magnet = True
-                magnet_time += powerups["magnet"][0][powerups["magnet"][1]] * 60
+                magnet_time += powerups["magnet"][game_data.magnetlevel] * 60
             if collided_object == "doublemoney":
                 level[player_pos//128][1] = "grass"
                 doublemoney = True
-                doublemoney_time += powerups["doublemoney"][0][powerups["doublemoney"][1]] * 60
+                doublemoney_time += powerups["doublemoney"][game_data.doublemoneylevel] * 60
 
         # run this if magnet has been equipped
         if use_magnet and magnet_timer < magnet_time:
@@ -234,10 +234,10 @@ def game():
 
         # run this if doublemoney has been collected
         if doublemoney and doublemoney_timer < doublemoney_time:
-            game_data.moneymultiplier = normal_moneymultiplier + 1
+            game_data.moneymultiplier = default_moneymultiplier * 2
             doublemoney_timer += 1
         else:
-            game_data.moneymultiplier = normal_moneymultiplier
+            game_data.moneymultiplier = default_moneymultiplier
             doublemoney = False
             doublemoney_timer = 0
 
@@ -368,6 +368,11 @@ def upgrades():
     dilofont_small = font.Font("fonts/dilofont.ttf", 25)
 
     upgrades_title_text = dilofont_large.render("Upgrades", True, (255, 255, 255))
+
+    wrench_maxlevel = len(powerups["wrench"]) - 1
+    magnet_maxlevel = len(powerups["magnet"]) - 1
+    doublemoney_maxlevel = len(powerups["doublemoney"]) - 1
+
     running = True
     while running:
         for evt in event.get():
@@ -375,11 +380,56 @@ def upgrades():
                 if game_data.music: mixer.music.unload()
                 running = False
                 main_menu()
+            if evt.type == MOUSEBUTTONDOWN:
+                if upgrade_wrench_button.collidepoint(mx, my):
+                    if game_data.money >= wrench_price and game_data.wrenchlevel < wrench_maxlevel:
+                        game_data.wrenchlevel += 1
+                        game_data.money -= wrench_price
+                if upgrade_magnet_button.collidepoint(mx, my):
+                    if game_data.money >= magnet_price and game_data.magnetlevel < magnet_maxlevel:
+                        game_data.magnetlevel += 1
+                        game_data.money -= magnet_price
+                if upgrade_doublemoney_button.collidepoint(mx, my):
+                    if game_data.money >= doublemoney_price and game_data.doublemoneylevel < doublemoney_maxlevel:
+                        game_data.doublemoneylevel += 1
+                        game_data.money -= doublemoney_price
+                if upgrade_health_button.collidepoint(mx, my):
+                    if game_data.money >= health_price:
+                        game_data.maxhealthlevel += 1
+                        game_data.maxhealth += game_data.maxhealthlevel * 25
+                        game_data.money -= health_price
                 
         mx, my = mouse.get_pos()
 
+        wrench_price = game_data.wrenchlevel * (50 + game_data.wrenchlevel*3) + 200
+        magnet_price = game_data.magnetlevel * (50 + game_data.magnetlevel*5) + 300
+        doublemoney_price = game_data.doublemoneylevel * (50 + game_data.doublemoneylevel*5) + 300
+        health_price = game_data.maxhealthlevel * (50 + game_data.maxhealthlevel*3) + 400
+
+        wrench_upgrade_text = dilofont_medium.render("Wrench: {} (#{}) - Restores {}".format(game_data.wrenchlevel, wrench_price, powerups["wrench"][game_data.wrenchlevel]), True, (255, 255, 255))
+        magnet_upgrade_text = dilofont_medium.render("Magnet: {} (#{}) (Lasts {}s)".format(game_data.magnetlevel, magnet_price, powerups["magnet"][game_data.magnetlevel]), True, (255, 255, 255))
+        doublemoney_upgrade_text = dilofont_medium.render("Double Money: {} (#{}) (Lasts {}s)".format(game_data.doublemoneylevel, doublemoney_price, powerups["doublemoney"][game_data.doublemoneylevel]), True, (255, 255, 255))
+        maxhealth_upgrade_text = dilofont_medium.render("Max Health: {} (#{}) - {} Health".format(game_data.maxhealthlevel, health_price, game_data.maxhealth), True, (255, 255, 255))
+        
+
         screen.fill((0, 100, 100))
         screen.blit(upgrades_title_text, (15, 10))
+
+        screen.blit(wrench_upgrade_text, (15, 150))
+        screen.blit(magnet_upgrade_text, (15, 225))
+        screen.blit(doublemoney_upgrade_text, (15, 300))
+        screen.blit(maxhealth_upgrade_text, (15, 375))
+
+        wrench_button_col = GREEN if game_data.money >= wrench_price and game_data.wrenchlevel < wrench_maxlevel else RED
+        magnet_button_col = GREEN if game_data.money >= magnet_price and game_data.magnetlevel < magnet_maxlevel else RED
+        doublemoney_button_col = GREEN if game_data.money >= doublemoney_price and game_data.doublemoneylevel < doublemoney_maxlevel else RED
+        health_button_col = GREEN if game_data.money >= health_price else RED
+
+        upgrade_wrench_button = draw_button(screen, (1000, 150), 100, 50, wrench_button_col, dilofont_small.render("UPGRADE" if game_data.wrenchlevel < wrench_maxlevel else "MAX LEVEL", True, (255, 255, 255)))
+        upgrade_magnet_button = draw_button(screen, (1000, 225), 100, 50, magnet_button_col, dilofont_small.render("UPGRADE" if game_data.magnetlevel < magnet_maxlevel else "MAX LEVEL", True, (255, 255, 255)))
+        upgrade_doublemoney_button = draw_button(screen, (1000, 300), 100, 50, doublemoney_button_col, dilofont_small.render("UPGRADE"  if game_data.doublemoneylevel < doublemoney_maxlevel else "MAX LEVEL", True, (255, 255, 255)))
+        upgrade_health_button = draw_button(screen, (1000, 375), 100, 50, health_button_col, dilofont_small.render("UPGRADE", True, (255, 255, 255)))
+
         display.flip()
 
 

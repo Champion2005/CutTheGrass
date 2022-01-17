@@ -20,19 +20,19 @@ def generate_level(level):
     for row in level:
         row.remove(row[0])
         randnum = randint(1, 10000)
-        if randnum <= 3500: row.append("tall-grass") # 35% chance
-        elif randnum <= 3650: row.append("large-rock") # 1.50% chance
-        elif randnum <= 3800: row.append("small-rock") # 1.5% chance
-        elif randnum <= 3900: row.append("wrench") # 1% chance
-        elif randnum <= 3920: row.append("magnet") # 0.2% chance
-        elif randnum <= 3940: row.append("doublemoney") # 0.2% chance
+        if randnum >= 6500: row.append("tall-grass") # 35% chance
+        elif randnum >= 6350: row.append("large-rock") # 1.5% chance
+        elif randnum >= 6200: row.append("small-rock") # 1.5% chance
+        elif randnum >= 6100: row.append("wrench") # 1% chance
+        elif randnum >= 6080: row.append("magnet") # 0.2% chance
+        elif randnum >= 6060: row.append("doublemoney") # 0.2% chance
         else: row.append("grass")
     return level
 
 def draw_level(screen, level, displacement, startpos = (0, 0)):
     for row in range(len(level)):
         for col in range(len(level[row])):
-            screen.blit(images["grass"], (col * 128 - displacement + startpos[0], row * 128 + startpos[1]))
+            if level[row][col] != "tall-grass": screen.blit(images["grass"], (col * 128 - displacement + startpos[0], row * 128 + startpos[1]))
             screen.blit(images[level[row][col]], (col * 128 - displacement + startpos[0], row * 128 + startpos[1]))
     
 def draw_ui(screen, pd, score, speed):
@@ -113,9 +113,9 @@ def reset_data():
 
 class GameData():
     def __init__(self):
-        # game attributes
+        # game and player attributes
         self.mower = "Basic"
-        self.money = 0
+        self.money = 6969696969669696969
         self.health = 100
         self.maxhealth = 100
         self.highscore = 0
@@ -125,9 +125,13 @@ class GameData():
         # mowers
         self.ownedmowers = ["Basic"]
 
+        # powerup levels
         self.wrenchlevel = 0
         self.magnetlevel = 0
         self.doublemoneylevel = 0
+
+        # attribute level
+        self.maxhealthlevel = 0
 
         # settings attributes
         self.music = True
