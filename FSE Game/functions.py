@@ -77,8 +77,8 @@ def draw_ui(screen, pd, score, speed):
 
     # speed
     speed_bg_width = speed_text.get_width() + 10
-    draw.rect(screen, (0, 110, 0), (350 + money_bg_width + score_bg_width + hscore_bg_width, 655, speed_bg_width, 30))
-    screen.blit(speed_text, (350 + money_bg_width + score_bg_width + hscore_bg_width + 5, 655))
+    draw.rect(screen, (0, 110, 0), (360 + money_bg_width + score_bg_width + hscore_bg_width, 655, speed_bg_width, 30))
+    screen.blit(speed_text, (360 + money_bg_width + score_bg_width + hscore_bg_width + 5, 655))
 
 def draw_button(screen, pos, width, height, col, text):
     draw.rect(screen, col, Rect(pos[0], pos[1], width, height))
@@ -115,7 +115,7 @@ class GameData():
     def __init__(self):
         # game and player attributes
         self.mower = "Basic"
-        self.money = 6969696969669696969
+        self.money = 0
         self.health = 100
         self.maxhealth = 100
         self.highscore = 0
